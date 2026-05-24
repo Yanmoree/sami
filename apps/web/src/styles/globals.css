@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ──────────────────────────────────────────────────────────────
+   Base typography & resets
+   ────────────────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    --color-ink: 10 10 10;
+    --color-paper: 255 255 255;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'ss01', 'cv01', 'cv11';
+    scroll-behavior: smooth;
+  }
+
+  /* Уважение к настройкам пользователя */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  body {
+    @apply bg-paper text-ink;
+    font-family:
+      'Inter',
+      system-ui,
+      -apple-system,
+      sans-serif;
+  }
+
+  ::selection {
+    background-color: rgb(var(--color-ink));
+    color: rgb(var(--color-paper));
+  }
+
+  /* Subtle scrollbar */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: #d4d4d4 transparent;
+  }
+
+  /* Focus ring — minimal */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-ink ring-offset-2 ring-offset-paper;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Components
+   ────────────────────────────────────────────────────────────── */
+@layer components {
+  .display {
+    @apply font-display font-medium tracking-tightest;
+  }
+  .label {
+    @apply text-xs uppercase tracking-[0.18em] text-ink-600;
+  }
+  .hairline {
+    @apply border-t border-ink-200;
+  }
+}
+
+/* Smooth page transitions */
+@layer utilities {
+  .anim-fade-in {
+    animation: fade-in 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
