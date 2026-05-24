@@ -12,6 +12,7 @@
     "dev:api": "npm --workspace @sami/api run dev",
     "build": "npm-run-all build:api build:web",
     "build:web": "npm --workspace @sami/web run build",
+    "build:demo": "npm --workspace @sami/web run build:demo",
     "build:api": "npm --workspace @sami/api run build",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",
