@@ -10,18 +10,19 @@ import type {
 import { findMockProduct, MOCK_CATEGORIES, MOCK_PRODUCTS } from './mock-data';
 import { getCustomProducts } from './mock-admin';
 
-/** Все товары = встроенные + созданные через админку (в localStorage) */
+/** Все товары = встроенные + созданные через админку (в localStorage). Built-in первыми. */
 function allProducts(): Product[] {
-  return [...getCustomProducts(), ...MOCK_PRODUCTS];
+  return [...MOCK_PRODUCTS, ...getCustomProducts()];
 }
 
 function findAnyProduct(slug: string): Product | null {
   return allProducts().find((p) => p.slug === slug) ?? findMockProduct(slug);
 }
 
+// v2 — после изменения каталога; старые ключи с прежними product id игнорируются
 const STORAGE_KEYS = {
-  cart: 'sami_demo_cart',
-  orders: 'sami_demo_orders',
+  cart: 'sami_demo_cart_v2',
+  orders: 'sami_demo_orders_v2',
 };
 
 function generateOrderNumber(): string {

@@ -6,7 +6,9 @@ import { MOCK_CATEGORIES } from './mock-data';
  * Каталог объединяет MOCK_PRODUCTS (встроенные) + custom products.
  * В production такая же логика реализуется через REST-эндпоинты /admin/products.
  */
-const STORAGE_KEY = 'sami_demo_admin_products';
+// v2 — после ребренда каталога; старый ключ игнорируется, чтобы не подтягивать
+// фейковые тестовые товары из ранних сессий
+const STORAGE_KEY = 'sami_demo_admin_products_v2';
 
 function readCustom(): Product[] {
   if (typeof window === 'undefined') return [];

@@ -39,7 +39,7 @@ const productsSeed: ProductSeed[] = [
     name: 'CORE TEE / BLACK',
     description:
       'Базовая футболка SAMI из плотного хлопка 240 г/м². Прямой свободный крой, минималистичная вышивка-логотип на груди.',
-    priceMinor: 320000,
+    priceMinor: 300000,
     categorySlug: 'tees',
     images: ['/products/black1.png', '/products/black2.png'],
   },
@@ -49,7 +49,7 @@ const productsSeed: ProductSeed[] = [
     name: 'CORE TEE / WHITE',
     description:
       'Базовая футболка SAMI из плотного хлопка 240 г/м². Прямой свободный крой, минималистичная вышивка-логотип.',
-    priceMinor: 320000,
+    priceMinor: 300000,
     categorySlug: 'tees',
     images: ['/products/white1.png', '/products/white2.png'],
   },

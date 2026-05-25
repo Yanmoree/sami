@@ -18,3 +18,17 @@ export const DEMO_USER = {
 };
 
 export const DEMO_ACCESS_TOKEN = 'demo-access-token';
+
+/**
+ * Одноразовая миграция: удаляем старые ключи v1 после ребренда каталога.
+ * Безопасно — выполняется при первой загрузке скрипта.
+ */
+if (IS_DEMO && typeof window !== 'undefined') {
+  try {
+    ['sami_demo_cart', 'sami_demo_orders', 'sami_demo_admin_products'].forEach((k) => {
+      window.localStorage.removeItem(k);
+    });
+  } catch {
+    /* ignore */
+  }
+}

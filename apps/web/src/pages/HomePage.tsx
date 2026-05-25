@@ -84,7 +84,7 @@ export function HomePage() {
             <img
               src="/head1.png"
               alt="SAMI editorial"
-              className="absolute inset-0 h-full w-full object-cover object-center"
+              className="absolute inset-0 h-full w-full object-cover object-[center_70%]"
             />
           </motion.div>
         </Container>

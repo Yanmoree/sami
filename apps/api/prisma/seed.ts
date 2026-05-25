@@ -4,30 +4,29 @@ import { customAlphabet } from 'nanoid';
 const prisma = new PrismaClient();
 const sku = customAlphabet('ABCDEFGHJKMNPQRSTUVWXYZ23456789', 8);
 
+/**
+ * Сид каталога. Идемпотентный: сначала чистит позиции корзин/заказов
+ * и старые товары, потом заполняет актуальным набором.
+ *
+ * Картинки лежат в apps/web/public/products/ — фронт раздаёт их относительными URL.
+ */
 async function main() {
   console.log('🌱 Seeding…');
 
-  // Categories
-  const [tees, hoodies, outer] = await Promise.all([
-    prisma.category.upsert({
-      where: { slug: 'tees' },
-      update: {},
-      create: { slug: 'tees', name: 'T-Shirts', order: 1 },
-    }),
-    prisma.category.upsert({
-      where: { slug: 'hoodies' },
-      update: {},
-      create: { slug: 'hoodies', name: 'Hoodies', order: 2 },
-    }),
-    prisma.category.upsert({
-      where: { slug: 'outerwear' },
-      update: {},
-      create: { slug: 'outerwear', name: 'Outerwear', order: 3 },
-    }),
-  ]);
+  // 1. Чистим зависимости и старые товары
+  await prisma.cartItem.deleteMany({});
+  await prisma.orderItem.deleteMany({});
+  await prisma.productImage.deleteMany({});
+  await prisma.productVariant.deleteMany({});
+  await prisma.product.deleteMany({});
+  await prisma.category.deleteMany({});
 
-  const placeholder = (seed: string) => `https://picsum.photos/seed/${seed}/900/1200`;
+  // 2. Категории
+  const tees = await prisma.category.create({
+    data: { slug: 'tees', name: 'T-Shirts', order: 1 },
+  });
 
+  // 3. Товары — пока только 2 футболки по 3000 ₽
   const products = [
     {
       slug: 'core-tee-black',
@@ -35,8 +34,8 @@ async function main() {
       categoryId: tees.id,
       description:
         'Базовая футболка SAMI из плотного хлопка 240 г/м². Прямой свободный крой, минималистичная вышивка-логотип на груди.',
-      priceMinor: 320000,
-      images: ['core-tee-black-1', 'core-tee-black-2', 'core-tee-black-3'],
+      priceMinor: 300000, // 3000 ₽
+      images: ['/products/black1.png', '/products/black2.png'],
     },
     {
       slug: 'core-tee-white',
@@ -44,63 +43,22 @@ async function main() {
       categoryId: tees.id,
       description:
         'Базовая футболка SAMI из плотного хлопка 240 г/м². Прямой свободный крой, минималистичная вышивка-логотип.',
-      priceMinor: 320000,
-      images: ['core-tee-white-1', 'core-tee-white-2'],
-    },
-    {
-      slug: 'logo-hoodie-black',
-      name: 'LOGO HOODIE / BLACK',
-      categoryId: hoodies.id,
-      description:
-        'Худи оверсайз из футера 380 г/м² с начёсом. Принт-логотип SAMI на спине, регулируемый шнур, карман-кенгуру.',
-      priceMinor: 790000,
-      images: ['logo-hoodie-black-1', 'logo-hoodie-black-2'],
-    },
-    {
-      slug: 'logo-hoodie-grey',
-      name: 'LOGO HOODIE / HEATHER GREY',
-      categoryId: hoodies.id,
-      description: 'Худи оверсайз в графитовом мел-меланже. Футер 380 г/м² с начёсом.',
-      priceMinor: 790000,
-      images: ['logo-hoodie-grey-1', 'logo-hoodie-grey-2'],
-    },
-    {
-      slug: 'shell-jacket',
-      name: 'SHELL JACKET / BLACK',
-      categoryId: outer.id,
-      description:
-        'Ветровка-shell с водоотталкивающей мембраной. Минималистичный силуэт, скрытые карманы, регулируемый капюшон.',
-      priceMinor: 1490000,
-      images: ['shell-jacket-1', 'shell-jacket-2'],
-    },
-    {
-      slug: 'work-pant',
-      name: 'WORK PANT / BLACK',
-      categoryId: outer.id,
-      description: 'Брюки в стиле workwear из плотного хлопкового твила. Прямой крой, усиленные швы.',
-      priceMinor: 690000,
-      images: ['work-pant-1', 'work-pant-2'],
+      priceMinor: 300000, // 3000 ₽
+      images: ['/products/white1.png', '/products/white2.png'],
     },
   ];
 
   for (const p of products) {
-    const product = await prisma.product.upsert({
-      where: { slug: p.slug },
-      update: {
-        name: p.name,
-        description: p.description,
-        priceMinor: p.priceMinor,
-        categoryId: p.categoryId,
-      },
-      create: {
+    const product = await prisma.product.create({
+      data: {
         slug: p.slug,
         name: p.name,
         description: p.description,
         priceMinor: p.priceMinor,
         categoryId: p.categoryId,
         images: {
-          create: p.images.map((id, i) => ({
-            url: placeholder(id),
+          create: p.images.map((url, i) => ({
+            url,
             alt: p.name,
             order: i,
           })),
@@ -109,10 +67,8 @@ async function main() {
     });
 
     for (const size of ['S', 'M', 'L', 'XL']) {
-      await prisma.productVariant.upsert({
-        where: { productId_size: { productId: product.id, size } },
-        update: {},
-        create: {
+      await prisma.productVariant.create({
+        data: {
           productId: product.id,
           size,
           sku: `SAMI-${sku()}`,
@@ -122,7 +78,7 @@ async function main() {
     }
   }
 
-  console.log('✅ Seed complete');
+  console.log(`✅ Seed complete — ${products.length} product(s)`);
 }
 
 main()
