@@ -61,7 +61,7 @@ export function Splash() {
             <Logo
               variant="mark"
               invert
-              className="w-[78vw] max-w-[640px] sm:max-w-[760px] h-auto"
+              className="w-[82vw] max-w-[860px] h-auto"
             />
           </motion.div>
         </motion.div>

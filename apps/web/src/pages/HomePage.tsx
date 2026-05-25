@@ -76,7 +76,7 @@ export function HomePage() {
           </div>
 
           <motion.div
-            className="relative aspect-[4/5] w-full overflow-hidden bg-ink-100"
+            className="relative w-full mx-auto overflow-hidden bg-ink-100 aspect-[4/5] max-h-[480px] md:max-h-[560px]"
             initial={{ opacity: 0, scale: 1.05 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.4, ease: EASE, delay: 0.1 }}

@@ -15,7 +15,7 @@ export function Footer() {
         <Reveal>
           <div className="grid gap-12 md:grid-cols-12">
             <div className="md:col-span-5 space-y-5">
-              <img src="/logo.png" alt="SAMI" className="h-20 w-auto md:h-28" />
+              <img src="/logo.png" alt="SAMI" className="block h-10 w-auto md:h-12" />
               <p className="max-w-xs text-sm leading-relaxed text-ink-500">{t('footer.lead')}</p>
             </div>
 

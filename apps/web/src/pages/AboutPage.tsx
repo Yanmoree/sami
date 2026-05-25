@@ -51,7 +51,7 @@ export function AboutPage() {
             <img
               src="/logo.png"
               alt="SAMI"
-              className="w-full max-w-md h-auto"
+              className="block w-full max-w-xl h-auto"
             />
           </Reveal>
         </Container>

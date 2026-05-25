@@ -73,7 +73,7 @@ export function Header() {
               src="/logo.png"
               alt="SAMI"
               draggable={false}
-              className="h-9 w-auto select-none md:h-10"
+              className="block h-7 w-auto select-none md:h-8"
             />
           </Link>
 
