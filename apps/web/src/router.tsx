@@ -15,6 +15,7 @@ const RegisterPage = lazy(() => import('@/pages/RegisterPage').then((m) => ({ de
 const AccountPage = lazy(() => import('@/pages/AccountPage').then((m) => ({ default: m.AccountPage })));
 const OrdersPage = lazy(() => import('@/pages/OrdersPage').then((m) => ({ default: m.OrdersPage })));
 const AboutPage = lazy(() => import('@/pages/AboutPage').then((m) => ({ default: m.AboutPage })));
+const AdminPage = lazy(() => import('@/pages/AdminPage').then((m) => ({ default: m.AdminPage })));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })));
 
 function RouteFallback() {
@@ -62,6 +63,10 @@ export const router = createBrowserRouter([
       {
         path: '/account/orders/:id',
         element: <ProtectedRoute>{lazyRoute(<OrdersPage />)}</ProtectedRoute>,
+      },
+      {
+        path: '/admin',
+        element: <ProtectedRoute>{lazyRoute(<AdminPage />)}</ProtectedRoute>,
       },
       { path: '*', element: lazyRoute(<NotFoundPage />) },
     ],

@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/Button';
 import { useCart, usePatchCartItem, useRemoveCartItem } from '@/hooks/useCart';
 import { formatRub } from '@/lib/format';
 import { useAuthStore } from '@/store/auth';
+import { useTranslation } from '@/i18n';
 
 export function CartPage() {
+  const t = useTranslation();
   const accessToken = useAuthStore((s) => s.accessToken);
   const { data, isLoading } = useCart();
   const patch = usePatchCartItem();
@@ -16,12 +18,10 @@ export function CartPage() {
     return (
       <Container className="py-24">
         <div className="mx-auto max-w-md text-center space-y-6">
-          <h1 className="display text-display-lg">Корзина</h1>
-          <p className="text-ink-600">
-            Войдите, чтобы увидеть свою корзину и оформить заказ.
-          </p>
+          <h1 className="display text-display-lg">{t('cart.title')}</h1>
+          <p className="text-ink-600">{t('cart.signInPrompt')}</p>
           <Link to="/login">
-            <Button size="lg">Войти</Button>
+            <Button size="lg">{t('cart.signIn')}</Button>
           </Link>
         </div>
       </Container>
@@ -31,17 +31,17 @@ export function CartPage() {
   const items = data?.cart.items ?? [];
 
   return (
-    <div >
+    <div>
       <Container className="py-12">
-        <h1 className="display text-display-lg mb-10">Корзина</h1>
+        <h1 className="display text-display-lg mb-10">{t('cart.title')}</h1>
 
-        {isLoading && <p className="text-sm text-ink-500">Загрузка…</p>}
+        {isLoading && <p className="text-sm text-ink-500">{t('common.loading')}</p>}
 
         {!isLoading && items.length === 0 && (
           <div className="py-24 text-center space-y-6">
-            <p className="text-ink-500">Корзина пуста.</p>
+            <p className="text-ink-500">{t('cart.empty')}</p>
             <Link to="/shop">
-              <Button>Перейти в каталог</Button>
+              <Button>{t('cart.toCatalog')}</Button>
             </Link>
           </div>
         )}
@@ -66,7 +66,7 @@ export function CartPage() {
                             {it.product.name}
                           </Link>
                           <p className="mt-1 text-xs uppercase tracking-[0.15em] text-ink-500">
-                            Размер: {it.variant.size}
+                            {t('common.size')}: {it.variant.size}
                           </p>
                         </div>
                         <p className="font-mono text-sm">{formatRub(price * it.quantity)}</p>
@@ -94,7 +94,7 @@ export function CartPage() {
                           type="button"
                           onClick={() => remove.mutate(it.id)}
                           className="text-ink-500 hover:text-ink transition-colors"
-                          aria-label="Удалить"
+                          aria-label={t('cart.removeItem')}
                         >
                           <Trash2 size={16} strokeWidth={1.5} />
                         </button>
@@ -106,18 +106,18 @@ export function CartPage() {
             </ul>
 
             <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
-              <h2 className="label">Итого</h2>
+              <h2 className="label">{t('common.total')}</h2>
               <div className="space-y-3 border-y border-ink-200 py-6">
-                <Row label="Подытог" value={formatRub(data?.subtotalMinor ?? 0)} />
-                <Row label="Доставка" value="При оформлении" />
+                <Row label={t('cart.subtotal')} value={formatRub(data?.subtotalMinor ?? 0)} />
+                <Row label={t('cart.shipping')} value={t('cart.atCheckout')} />
               </div>
               <div className="flex items-baseline justify-between">
-                <span className="label">Total</span>
+                <span className="label">{t('common.total')}</span>
                 <span className="font-mono text-2xl">{formatRub(data?.subtotalMinor ?? 0)}</span>
               </div>
               <Link to="/checkout">
                 <Button size="lg" fullWidth>
-                  Оформить заказ
+                  {t('cart.checkout')}
                 </Button>
               </Link>
             </aside>

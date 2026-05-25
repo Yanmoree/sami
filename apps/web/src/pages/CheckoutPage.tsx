@@ -9,41 +9,57 @@ import { useCart } from '@/hooks/useCart';
 import { ordersApi } from '@/api/endpoints';
 import { formatRub } from '@/lib/format';
 import { useAuthStore } from '@/store/auth';
+import { useProfileStore } from '@/store/profile';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-
-const schema = z.object({
-  customerEmail: z.string().email('Некорректный email'),
-  customerPhone: z.string().min(5, 'Введите телефон'),
-  fullName: z.string().min(2, 'Укажите ФИО'),
-  city: z.string().min(1, 'Город'),
-  street: z.string().min(1, 'Улица'),
-  building: z.string().min(1, 'Дом'),
-  apartment: z.string().optional(),
-  postalCode: z.string().min(3, 'Индекс'),
-  comment: z.string().optional(),
-});
-
-type FormData = z.infer<typeof schema>;
+import { useTranslation } from '@/i18n';
 
 const SHIPPING_MINOR = 49000; // 490 ₽ заглушка
 
 export function CheckoutPage() {
+  const t = useTranslation();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const user = useAuthStore((s) => s.user);
+  const profile = useProfileStore((s) => s.profile);
+  const setProfile = useProfileStore((s) => s.setProfile);
+  const setAddress = useProfileStore((s) => s.setAddress);
   const { data: cartData } = useCart();
+
+  const schema = z.object({
+    customerEmail: z.string().email(t('auth.errEmail')),
+    customerPhone: z.string().min(5, t('common.required')),
+    fullName: z.string().min(2, t('common.required')),
+    city: z.string().min(1, t('common.required')),
+    street: z.string().min(1, t('common.required')),
+    building: z.string().min(1, t('common.required')),
+    apartment: z.string().optional(),
+    postalCode: z.string().min(3, t('common.required')),
+    comment: z.string().optional(),
+  });
+  type FormData = z.infer<typeof schema>;
+
+  // Автоподстановка: профиль → email из auth → пусто
+  const defaultValues: FormData = {
+    customerEmail: profile.email || user?.email || '',
+    customerPhone: profile.phone || profile.address.phone || '',
+    fullName:
+      profile.address.fullName ||
+      [profile.firstName || user?.firstName, profile.lastName || user?.lastName]
+        .filter(Boolean)
+        .join(' '),
+    city: profile.address.city,
+    street: profile.address.street,
+    building: profile.address.building,
+    apartment: profile.address.apartment,
+    postalCode: profile.address.postalCode,
+    comment: '',
+  };
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      customerEmail: user?.email ?? '',
-      fullName: [user?.firstName, user?.lastName].filter(Boolean).join(' '),
-    },
-  });
+  } = useForm<FormData>({ resolver: zodResolver(schema), defaultValues });
 
   const createOrder = useMutation({
     mutationFn: (data: FormData) =>
@@ -62,7 +78,21 @@ export function CheckoutPage() {
           postalCode: data.postalCode,
         },
       }),
-    onSuccess: (order) => {
+    onSuccess: (order, data) => {
+      // Сохраняем в профиль то что пользователь ввёл — пригодится в следующий раз
+      setProfile({
+        email: data.customerEmail,
+        phone: data.customerPhone,
+      });
+      setAddress({
+        fullName: data.fullName,
+        phone: data.customerPhone,
+        city: data.city,
+        street: data.street,
+        building: data.building,
+        apartment: data.apartment ?? '',
+        postalCode: data.postalCode,
+      });
       qc.invalidateQueries({ queryKey: ['cart'] });
       navigate(`/account/orders/${order.id}`);
     },
@@ -74,40 +104,63 @@ export function CheckoutPage() {
   const total = subtotal + SHIPPING_MINOR;
 
   return (
-    <div >
+    <div>
       <Container className="py-12">
-        <h1 className="display text-display-lg mb-10">Оформление</h1>
+        <h1 className="display text-display-lg mb-10">{t('checkout.title')}</h1>
 
         <form onSubmit={onSubmit} className="grid gap-12 lg:grid-cols-[1.5fr,1fr]">
           <div className="space-y-10">
             <section className="space-y-5">
-              <h2 className="label">Контакты</h2>
-              <Input label="Email" type="email" error={errors.customerEmail?.message} {...register('customerEmail')} />
-              <Input label="Телефон" type="tel" placeholder="+7" error={errors.customerPhone?.message} {...register('customerPhone')} />
+              <h2 className="label">{t('checkout.contacts')}</h2>
+              <Input
+                label={t('checkout.email')}
+                type="email"
+                error={errors.customerEmail?.message}
+                {...register('customerEmail')}
+              />
+              <Input
+                label={t('checkout.phone')}
+                type="tel"
+                placeholder="+7"
+                error={errors.customerPhone?.message}
+                {...register('customerPhone')}
+              />
             </section>
 
             <section className="space-y-5">
-              <h2 className="label">Адрес доставки</h2>
-              <Input label="ФИО получателя" error={errors.fullName?.message} {...register('fullName')} />
+              <h2 className="label">{t('checkout.address')}</h2>
+              <Input
+                label={t('checkout.fullName')}
+                error={errors.fullName?.message}
+                {...register('fullName')}
+              />
               <div className="grid grid-cols-2 gap-5">
-                <Input label="Город" error={errors.city?.message} {...register('city')} />
-                <Input label="Индекс" error={errors.postalCode?.message} {...register('postalCode')} />
+                <Input label={t('checkout.city')} error={errors.city?.message} {...register('city')} />
+                <Input
+                  label={t('checkout.postal')}
+                  error={errors.postalCode?.message}
+                  {...register('postalCode')}
+                />
               </div>
-              <Input label="Улица" error={errors.street?.message} {...register('street')} />
+              <Input label={t('checkout.street')} error={errors.street?.message} {...register('street')} />
               <div className="grid grid-cols-2 gap-5">
-                <Input label="Дом" error={errors.building?.message} {...register('building')} />
-                <Input label="Квартира / офис" error={errors.apartment?.message} {...register('apartment')} />
+                <Input label={t('checkout.building')} error={errors.building?.message} {...register('building')} />
+                <Input
+                  label={t('checkout.apartment')}
+                  error={errors.apartment?.message}
+                  {...register('apartment')}
+                />
               </div>
             </section>
 
             <section className="space-y-5">
-              <h2 className="label">Комментарий</h2>
-              <Input placeholder="По желанию" {...register('comment')} />
+              <h2 className="label">{t('checkout.comment')}</h2>
+              <Input placeholder={t('checkout.commentPlaceholder')} {...register('comment')} />
             </section>
           </div>
 
           <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
-            <h2 className="label">Заказ</h2>
+            <h2 className="label">{t('checkout.summary')}</h2>
             <ul className="divide-y divide-ink-200 border-y border-ink-200">
               {cartData?.cart.items.map((it) => {
                 const price = it.variant.priceMinor ?? it.product.priceMinor;
@@ -122,23 +175,24 @@ export function CheckoutPage() {
               })}
             </ul>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-ink-600">Подытог</span><span className="font-mono">{formatRub(subtotal)}</span></div>
-              <div className="flex justify-between"><span className="text-ink-600">Доставка</span><span className="font-mono">{formatRub(SHIPPING_MINOR)}</span></div>
+              <div className="flex justify-between">
+                <span className="text-ink-600">{t('cart.subtotal')}</span>
+                <span className="font-mono">{formatRub(subtotal)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-ink-600">{t('cart.shipping')}</span>
+                <span className="font-mono">{formatRub(SHIPPING_MINOR)}</span>
+              </div>
             </div>
             <div className="flex items-baseline justify-between border-t border-ink-200 pt-4">
-              <span className="label">Total</span>
+              <span className="label">{t('common.total')}</span>
               <span className="font-mono text-xl">{formatRub(total)}</span>
             </div>
             <Button type="submit" size="lg" fullWidth isLoading={isSubmitting || createOrder.isPending}>
-              Подтвердить заказ
+              {t('checkout.confirm')}
             </Button>
-            <p className="text-xs text-ink-500 leading-relaxed">
-              Нажимая «Подтвердить заказ», вы соглашаетесь с обработкой персональных данных. Оплата — следующим этапом
-              (ЮKassa).
-            </p>
-            {createOrder.isError && (
-              <p className="text-xs text-red-600">Не удалось оформить заказ. Попробуйте ещё раз.</p>
-            )}
+            <p className="text-xs text-ink-500 leading-relaxed">{t('checkout.disclaimer')}</p>
+            {createOrder.isError && <p className="text-xs text-red-600">{t('checkout.error')}</p>}
           </aside>
         </form>
       </Container>

@@ -6,22 +6,26 @@ import { Container } from '@/components/ui/Container';
 import { ProductCard } from '@/components/product/ProductCard';
 import { ProductGridSkeleton } from '@/components/ui/Skeleton';
 import { RevealGroup, revealItem } from '@/components/ui/Reveal';
+import { useTranslation } from '@/i18n';
 import { cn } from '@/lib/cn';
 
-const categoryNames: Record<string, string> = {
-  tees: 'T-Shirts',
-  hoodies: 'Hoodies',
-  outerwear: 'Outerwear',
+const categoryKeys: Record<string, string> = {
+  tees: 'nav.tees',
+  hoodies: 'nav.hoodies',
+  outerwear: 'nav.outerwear',
 };
 
+const categorySlugs = Object.keys(categoryKeys);
+
 export function CatalogPage() {
+  const t = useTranslation();
   const { category } = useParams<{ category?: string }>();
   const { data, isLoading } = useQuery({
     queryKey: ['products', { category }],
     queryFn: () => productsApi.list({ category, limit: 60 }),
   });
 
-  const heading = category ? categoryNames[category] ?? category : 'All';
+  const heading = category ? t(categoryKeys[category] ?? category) : t('catalog.all');
 
   return (
     <div>
@@ -38,26 +42,26 @@ export function CatalogPage() {
           </motion.h1>
           <nav className="hidden md:flex items-center gap-6 text-xs uppercase tracking-[0.18em]">
             <Link to="/shop" className={cn(!category ? 'text-ink' : 'text-ink-500 hover:text-ink')}>
-              All
+              {t('catalog.all')}
             </Link>
-            {Object.entries(categoryNames).map(([slug, name]) => (
+            {categorySlugs.map((slug) => (
               <Link
                 key={slug}
                 to={`/shop/${slug}`}
                 className={cn(category === slug ? 'text-ink' : 'text-ink-500 hover:text-ink')}
               >
-                {name}
+                {t(categoryKeys[slug]!)}
               </Link>
             ))}
           </nav>
         </div>
 
         {isLoading ? (
-          <ProductGridSkeleton count={12} />
+          <ProductGridSkeleton count={4} />
         ) : (
           <RevealGroup
             className="grid grid-cols-2 gap-x-4 gap-y-12 md:grid-cols-3 lg:grid-cols-4"
-            stagger={0.05}
+            stagger={0.06}
           >
             {data?.items.map((p) => (
               <motion.div key={p.id} variants={revealItem}>
@@ -69,7 +73,7 @@ export function CatalogPage() {
 
         {data && data.items.length === 0 && (
           <div className="py-24 text-center">
-            <p className="text-ink-500">В этой категории пока пусто.</p>
+            <p className="text-ink-500">{t('catalog.empty')}</p>
           </div>
         )}
       </Container>

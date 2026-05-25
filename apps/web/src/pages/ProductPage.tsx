@@ -10,11 +10,13 @@ import { useAuthStore } from '@/store/auth';
 import { useAddToCart } from '@/hooks/useCart';
 import { ProductPageSkeleton } from '@/components/ui/Skeleton';
 import { Reveal } from '@/components/ui/Reveal';
+import { useTranslation } from '@/i18n';
 import { cn } from '@/lib/cn';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 export function ProductPage() {
+  const t = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const accessToken = useAuthStore((s) => s.accessToken);
@@ -29,9 +31,7 @@ export function ProductPage() {
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [activeImage, setActiveImage] = useState(0);
 
-  if (isLoading || !product) {
-    return <ProductPageSkeleton />;
-  }
+  if (isLoading || !product) return <ProductPageSkeleton />;
 
   const variant = product.variants.find((v) => v.id === selectedVariantId);
   const price = variant?.priceMinor ?? product.priceMinor;
@@ -43,10 +43,7 @@ export function ProductPage() {
       return;
     }
     if (!variant) return;
-    await addToCart.mutateAsync({
-      productId: product.id,
-      variantId: variant.id,
-    });
+    await addToCart.mutateAsync({ productId: product.id, variantId: variant.id });
     navigate('/cart');
   };
 
@@ -80,10 +77,16 @@ export function ProductPage() {
                   onClick={() => setActiveImage(i)}
                   className={cn(
                     'aspect-[3/4] overflow-hidden bg-ink-100 transition-opacity',
-                    i === activeImage ? 'opacity-100 outline outline-1 outline-ink' : 'opacity-60 hover:opacity-100',
+                    i === activeImage
+                      ? 'opacity-100 outline outline-1 outline-ink'
+                      : 'opacity-60 hover:opacity-100',
                   )}
                 >
-                  <img src={img.url} alt="" className="h-full w-full object-cover transition-transform duration-700 hover:scale-105" />
+                  <img
+                    src={img.url}
+                    alt=""
+                    className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
+                  />
                 </button>
               ))}
             </div>
@@ -102,7 +105,7 @@ export function ProductPage() {
 
           {/* Size selector */}
           <div className="space-y-3">
-            <p className="label">Размер</p>
+            <p className="label">{t('common.size')}</p>
             <div className="flex flex-wrap gap-2">
               {product.variants.map((v) => {
                 const out = v.stock <= 0;
@@ -135,13 +138,13 @@ export function ProductPage() {
             isLoading={addToCart.isPending}
             onClick={handleAdd}
           >
-            {variant ? 'Добавить в корзину' : 'Выберите размер'}
+            {variant ? t('product.addToCart') : t('product.chooseSize')}
           </Button>
 
           <div className="hairline pt-6 text-sm text-ink-600 space-y-1.5">
-            <p>· Доставка по РФ — 3–7 рабочих дней</p>
-            <p>· Возврат в течение 14 дней</p>
-            <p>· Материал: 100% хлопок, 240 г/м²</p>
+            <p>· {t('product.shippingNote')}</p>
+            <p>· {t('product.returnsNote')}</p>
+            <p>· {t('product.materialNote')}</p>
           </div>
         </Reveal>
       </Container>

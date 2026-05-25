@@ -2,33 +2,21 @@ import { Link } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Reveal, RevealGroup, revealItem } from '@/components/ui/Reveal';
-import { Logo } from '@/components/ui/Logo';
 import { motion } from 'framer-motion';
+import { useTranslation } from '@/i18n';
 
-const principles = [
-  {
-    n: '01',
-    title: 'Ткань — основа',
-    body: 'Плотный хлопок 240 г/м², твид и shell-мембраны. Никаких смесей ради удешевления.',
-  },
-  {
-    n: '02',
-    title: 'Простой силуэт',
-    body: 'Минимум деталей, выверенные пропорции. То, что работает само по себе и сочетается со всем.',
-  },
-  {
-    n: '03',
-    title: 'Локально',
-    body: 'Производство в Москве. Маленькие партии, прямой контакт с цехом, никаких посредников.',
-  },
-  {
-    n: '04',
-    title: 'Без перевыпусков',
-    body: 'Если коллекция кончилась — она кончилась. Никаких бесконечных тиражей.',
-  },
-];
+const EASE = [0.16, 1, 0.3, 1] as const;
 
 export function AboutPage() {
+  const t = useTranslation();
+  const heroLines = t('about.heroTitle').split('\n');
+  const principles = [
+    { n: '01', title: t('about.p1Title'), body: t('about.p1Body') },
+    { n: '02', title: t('about.p2Title'), body: t('about.p2Body') },
+    { n: '03', title: t('about.p3Title'), body: t('about.p3Body') },
+    { n: '04', title: t('about.p4Title'), body: t('about.p4Body') },
+  ];
+
   return (
     <div>
       {/* HERO */}
@@ -41,15 +29,15 @@ export function AboutPage() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="label"
             >
-              About SAMI
+              {t('about.label')}
             </motion.p>
             <h1 className="display text-display-2xl overflow-hidden">
-              {['Меньше', 'вещей.', 'Больше', 'смысла.'].map((line, i) => (
+              {heroLines.map((line, i) => (
                 <span key={i} className="block overflow-hidden">
                   <motion.span
                     initial={{ y: '110%' }}
                     animate={{ y: 0 }}
-                    transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.2 + i * 0.1 }}
+                    transition={{ duration: 0.9, ease: EASE, delay: 0.2 + i * 0.1 }}
                     className="block"
                   >
                     {line}
@@ -60,7 +48,11 @@ export function AboutPage() {
           </div>
 
           <Reveal className="flex items-center justify-center md:justify-end" delay={0.4} y={0}>
-            <Logo variant="mark" className="w-full max-w-md h-auto" />
+            <img
+              src="/logo.png"
+              alt="SAMI"
+              className="w-full max-w-md h-auto"
+            />
           </Reveal>
         </Container>
       </section>
@@ -69,20 +61,12 @@ export function AboutPage() {
       <section className="py-24">
         <Container className="grid gap-12 md:grid-cols-12">
           <Reveal className="md:col-span-4">
-            <p className="label">Story</p>
+            <p className="label">{t('about.storyLabel')}</p>
           </Reveal>
           <Reveal className="md:col-span-8 space-y-6 max-w-2xl text-lg leading-relaxed text-ink-700" delay={0.1}>
-            <p>
-              SAMI начался как ответ на «слишком много». Слишком много брендов, слишком много дропов,
-              слишком много дешёвых тканей с громкими принтами.
-            </p>
-            <p>
-              Мы делаем медленнее и спокойнее: одна тема в сезон, по 4–6 моделей. Каждая
-              отрабатывается до того состояния, когда из неё нельзя ничего убрать.
-            </p>
-            <p className="text-ink">
-              Базовое, сделанное иначе.
-            </p>
+            <p>{t('about.story1')}</p>
+            <p>{t('about.story2')}</p>
+            <p className="text-ink">{t('about.story3')}</p>
           </Reveal>
         </Container>
       </section>
@@ -91,7 +75,7 @@ export function AboutPage() {
       <section className="border-y border-ink-200 bg-ink text-paper overflow-hidden">
         <Container className="py-24">
           <Reveal>
-            <p className="label text-ink-300 mb-12">Principles</p>
+            <p className="label text-ink-300 mb-12">{t('about.principlesLabel')}</p>
           </Reveal>
           <RevealGroup className="grid gap-12 md:grid-cols-2" stagger={0.1}>
             {principles.map((p) => (
@@ -105,18 +89,26 @@ export function AboutPage() {
         </Container>
       </section>
 
-      {/* IMAGE STRIP */}
+      {/* IMAGE STRIP — используем lookbook фото */}
       <section className="py-24">
         <Container>
           <div className="grid grid-cols-12 gap-4">
             <Reveal as="div" className="col-span-12 md:col-span-8">
               <div className="relative aspect-[4/3] overflow-hidden bg-ink-100">
-                <img src="https://picsum.photos/seed/sami-about-1/1600/1200" alt="" className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.2s] ease-out-expo hover:scale-105" />
+                <img
+                  src="/lookbook/lookbook3.png"
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.2s] ease-out-expo hover:scale-105"
+                />
               </div>
             </Reveal>
             <Reveal as="div" delay={0.1} className="col-span-12 md:col-span-4">
-              <div className="relative aspect-[3/4] overflow-hidden bg-ink-100 md:aspect-[3/4]">
-                <img src="https://picsum.photos/seed/sami-about-2/900/1200" alt="" className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.2s] ease-out-expo hover:scale-105" />
+              <div className="relative aspect-[3/4] overflow-hidden bg-ink-100">
+                <img
+                  src="/lookbook/lookbook6.png"
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.2s] ease-out-expo hover:scale-105"
+                />
               </div>
             </Reveal>
           </div>
@@ -127,13 +119,13 @@ export function AboutPage() {
       <section className="py-24 text-center">
         <Container>
           <Reveal>
-            <p className="display text-display-xl">Готовы посмотреть?</p>
+            <p className="display text-display-xl">{t('about.ctaTitle')}</p>
             <div className="mt-8 flex justify-center gap-3">
               <Link to="/shop">
-                <Button size="lg">Перейти в каталог</Button>
+                <Button size="lg">{t('about.ctaPrimary')}</Button>
               </Link>
-              <Link to="/shop/hoodies">
-                <Button size="lg" variant="outline">Хиты</Button>
+              <Link to="/shop">
+                <Button size="lg" variant="outline">{t('about.ctaSecondary')}</Button>
               </Link>
             </div>
           </Reveal>

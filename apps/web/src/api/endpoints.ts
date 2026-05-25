@@ -1,7 +1,10 @@
 import { api } from './client';
 import { IS_DEMO } from '@/lib/demo';
 import { mockAuthApi, mockCartApi, mockOrdersApi, mockProductsApi } from './mock';
+import { mockAdminApi, type AdminProductInput } from './mock-admin';
 import type { Cart, CartResponse, Order, Product, User } from './types';
+
+export type { AdminProductInput };
 
 // ──────────────────────────────────────────────────────────────
 // Public API contracts
@@ -61,6 +64,14 @@ export interface OrdersApi {
   create: (data: CreateOrderInput) => Promise<Order>;
 }
 
+export interface AdminApi {
+  list: () => Promise<Product[]>;
+  create: (input: AdminProductInput) => Promise<Product>;
+  update: (id: string, input: AdminProductInput) => Promise<Product>;
+  remove: (id: string) => Promise<void>;
+  updateStock: (productId: string, size: string, stock: number) => Promise<void>;
+}
+
 // ──────────────────────────────────────────────────────────────
 // Реальные эндпоинты (http к Fastify)
 // ──────────────────────────────────────────────────────────────
@@ -103,6 +114,16 @@ const realOrdersApi: OrdersApi = {
   create: (data) => api.post<{ order: Order }>('/orders', data).then((r) => r.data.order),
 };
 
+const realAdminApi: AdminApi = {
+  list: () => api.get<{ items: Product[] }>('/admin/products').then((r) => r.data.items),
+  create: (input) => api.post<{ product: Product }>('/admin/products', input).then((r) => r.data.product),
+  update: (id, input) =>
+    api.put<{ product: Product }>(`/admin/products/${id}`, input).then((r) => r.data.product),
+  remove: (id) => api.delete(`/admin/products/${id}`).then(() => undefined),
+  updateStock: (productId, size, stock) =>
+    api.patch(`/admin/products/${productId}/variants/${size}/stock`, { stock }).then(() => undefined),
+};
+
 // ──────────────────────────────────────────────────────────────
 // Switch: реальный API или мок (типизация сохраняется)
 // ──────────────────────────────────────────────────────────────
@@ -110,5 +131,6 @@ export const authApi: AuthApi = IS_DEMO ? (mockAuthApi as AuthApi) : realAuthApi
 export const productsApi: ProductsApi = IS_DEMO ? (mockProductsApi as ProductsApi) : realProductsApi;
 export const cartApi: CartApi = IS_DEMO ? (mockCartApi as CartApi) : realCartApi;
 export const ordersApi: OrdersApi = IS_DEMO ? (mockOrdersApi as OrdersApi) : realOrdersApi;
+export const adminApi: AdminApi = IS_DEMO ? (mockAdminApi as AdminApi) : realAdminApi;
 
 export type { Cart, Product, User };

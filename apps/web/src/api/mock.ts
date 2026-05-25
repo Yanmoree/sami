@@ -8,6 +8,16 @@ import type {
   User,
 } from './types';
 import { findMockProduct, MOCK_CATEGORIES, MOCK_PRODUCTS } from './mock-data';
+import { getCustomProducts } from './mock-admin';
+
+/** Все товары = встроенные + созданные через админку (в localStorage) */
+function allProducts(): Product[] {
+  return [...getCustomProducts(), ...MOCK_PRODUCTS];
+}
+
+function findAnyProduct(slug: string): Product | null {
+  return allProducts().find((p) => p.slug === slug) ?? findMockProduct(slug);
+}
 
 const STORAGE_KEYS = {
   cart: 'sami_demo_cart',
@@ -104,7 +114,7 @@ export const mockAuthApi = {
 
 export const mockProductsApi = {
   async list(params?: { category?: string; q?: string; limit?: number; offset?: number }) {
-    const items = MOCK_PRODUCTS.filter((p) => {
+    const items = allProducts().filter((p) => {
       if (params?.category && p.category?.slug !== params.category) return false;
       if (params?.q) {
         const q = params.q.toLowerCase();
@@ -124,7 +134,7 @@ export const mockProductsApi = {
     });
   },
   async bySlug(slug: string): Promise<Product> {
-    const product = findMockProduct(slug);
+    const product = findAnyProduct(slug);
     if (!product) throw new Error('Товар не найден');
     return delay(product);
   },
@@ -138,7 +148,7 @@ export const mockCartApi = {
     return delay(computeCartResponse(readCart()));
   },
   async add(productId: string, variantId: string, quantity = 1): Promise<CartResponse> {
-    const product = MOCK_PRODUCTS.find((p) => p.id === productId);
+    const product = allProducts().find((p) => p.id === productId);
     if (!product) throw new Error('Товар не найден');
     const variant = product.variants.find((v) => v.id === variantId);
     if (!variant) throw new Error('Вариант не найден');
