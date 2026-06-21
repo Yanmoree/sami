@@ -1,0 +1,5 @@
+# Защита от случайного `surge` из корня проекта.
+# Деплой всегда должен идти из apps/web/dist — для этого используй
+# `npm run deploy:surge` или `surge ./apps/web/dist <domain>`.
+*
+!apps/web/dist/**

@@ -1,0 +1,77 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# Prisma
+apps/api/prisma/migrations/dev/
+*.db
+*.db-journal
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Misc
+.cache/
+.turbo/
+.parcel-cache/
+
+# Stray ParserYSS scraping artifacts (do not commit)
+emails_all.txt
+phones_all.txt
+found_emails.*
+contacts.json
+parse.py
+test-mail.js
+*.report.json
+competitor_*.json
+real_contacts_*.json
+real_contacts_*.txt
+real_emails_*.txt
+real_phones_*.txt
+__pycache__/
+advanced_*.json
+advanced_*.txt
+final_intercept_*.json
+intercepted_leads*.json
+intercepted_leads*.txt
+keywords_config.txt
+lead_session.session
+leads_*.json
+leads_*.txt
+mitm_capture.py
+parse_info.py
+search.py

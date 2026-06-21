@@ -1,0 +1,48 @@
+# Render Blueprint для SAMI API.
+# БД — отдельно на Neon (бесплатный PostgreSQL); URL подставляется в DATABASE_URL вручную.
+# Фронт — отдельно на Vercel.
+
+services:
+  - type: web
+    name: sami-api
+    runtime: node
+    plan: free
+    region: frankfurt   # ближе к РФ-аудитории
+    rootDir: .
+    branch: main
+    autoDeploy: true
+    buildCommand: |
+      npm install
+      npm --workspace @sami/api run db:generate
+      npm --workspace @sami/api run db:migrate:deploy
+      npm --workspace @sami/api run db:seed
+      npm --workspace @sami/api run build
+    startCommand: npm --workspace @sami/api start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: HOST
+        value: 0.0.0.0
+      # Render по умолчанию не ставит devDeps в production — а нам нужны prisma CLI и tsx для миграций/сида.
+      - key: NPM_CONFIG_PRODUCTION
+        value: 'false'
+      # ↓ ставится вручную: вставь Neon connection string (с ?sslmode=require)
+      - key: DATABASE_URL
+        sync: false
+      # ↓ ставится вручную после деплоя фронта на Vercel: https://sami-xxx.vercel.app
+      - key: CORS_ORIGIN
+        sync: false
+      # Секреты — Render генерирует случайные значения автоматически
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: COOKIE_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_TTL
+        value: 15m
+      - key: JWT_REFRESH_TTL
+        value: 30d

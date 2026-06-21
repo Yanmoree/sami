@@ -1,0 +1,27 @@
+# Локальная MySQL 8 для разработки (на случай если не хочешь ставить через brew).
+# Прод-БД живёт отдельно на reg.ru — этот compose только для dev.
+services:
+  db:
+    image: mysql:8.0
+    container_name: sami-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: sami_root
+      MYSQL_DATABASE: sami
+      MYSQL_USER: sami
+      MYSQL_PASSWORD: sami
+    ports:
+      - "3306:3306"
+    volumes:
+      - sami_mysql:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+
+volumes:
+  sami_mysql:

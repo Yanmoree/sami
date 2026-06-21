@@ -1,0 +1,358 @@
+// SAMI — database schema
+// Prisma + MySQL 8 (reg.ru). Все денежные суммы — в копейках (Int).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────────────────────────────────────────────
+// USERS / AUTH
+// ───────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  firstName    String?
+  lastName     String?
+  phone        String?
+  role         UserRole @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+  addresses     Address[]
+  cart          Cart?
+  orders        Order[]
+  conversations Conversation[]
+  wishlist      WishlistItem[]
+
+  @@index([createdAt])
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Address {
+  id         String  @id @default(cuid())
+  userId     String
+  fullName   String
+  phone      String
+  country    String  @default("RU")
+  city       String
+  street     String
+  building   String
+  apartment  String?
+  postalCode String
+  isDefault  Boolean @default(false)
+  createdAt  DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@index([userId])
+}
+
+// ───────────────────────────────────────────────────────────────
+// CATALOG
+// ───────────────────────────────────────────────────────────────
+
+model Category {
+  id       String    @id @default(cuid())
+  slug     String    @unique
+  name     String
+  order    Int       @default(0)
+  products Product[]
+}
+
+model Product {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  name            String
+  description     String   @db.Text
+  priceMinor      Int
+  currency        String   @default("RUB")
+  categoryId      String?
+  isActive        Boolean  @default(true)
+  // Группа цвет-вариаций: товары с одинаковым slug относятся к одному «продукту»
+  // и показываются на карточке как цветные свотчи.
+  colorGroupSlug  String?
+  // CSS-цвет свотча для этой вариации (например "#0A0A0A" или "#FFFFFF")
+  colorHex        String?
+  // Человеко-читаемое имя цвета (для tooltip / aria-label)
+  colorName       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  category     Category?       @relation(fields: [categoryId], references: [id])
+  images       ProductImage[]
+  variants     ProductVariant[]
+  cartItems    CartItem[]
+  orderItems   OrderItem[]
+  wishlistedBy WishlistItem[]
+
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([colorGroupSlug])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  url       String  @db.Text
+  alt       String?
+  order     Int     @default(0)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model ProductVariant {
+  id         String  @id @default(cuid())
+  productId  String
+  size       String   // "S", "M", "L", "XL", "ONESIZE"
+  sku        String   @unique
+  priceMinor Int?
+  stock      Int     @default(0)
+  createdAt  DateTime @default(now())
+
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@unique([productId, size])
+  @@index([productId])
+}
+
+// ───────────────────────────────────────────────────────────────
+// CART
+// ───────────────────────────────────────────────────────────────
+
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  productId String
+  variantId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  cart    Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product        @relation(fields: [productId], references: [id])
+  variant ProductVariant @relation(fields: [variantId], references: [id])
+
+  @@unique([cartId, variantId])
+  @@index([cartId])
+}
+
+// ───────────────────────────────────────────────────────────────
+// ORDERS
+// ───────────────────────────────────────────────────────────────
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+model Order {
+  id                      String      @id @default(cuid())
+  number                  String      @unique
+  userId                  String
+  status                  OrderStatus @default(PENDING_PAYMENT)
+  subtotalMinor           Int
+  shippingMinor           Int         @default(0)
+  totalMinor              Int
+  currency                String      @default("RUB")
+  customerEmail           String
+  customerPhone           String
+  addressId               String?
+  shippingAddressSnapshot Json?
+  comment                 String?     @db.Text
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+  paidAt                  DateTime?
+  cancelledAt             DateTime?
+
+  user     User        @relation(fields: [userId], references: [id])
+  address  Address?    @relation(fields: [addressId], references: [id])
+  items    OrderItem[]
+  payments Payment[]
+
+  @@index([userId, createdAt])
+  @@index([status])
+}
+
+model OrderItem {
+  id           String @id @default(cuid())
+  orderId      String
+  productId    String
+  variantId    String
+  nameSnapshot String
+  sizeSnapshot String
+  priceMinor   Int
+  quantity     Int
+
+  order   Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product        @relation(fields: [productId], references: [id])
+  variant ProductVariant @relation(fields: [variantId], references: [id])
+
+  @@index([orderId])
+}
+
+// ───────────────────────────────────────────────────────────────
+// PAYMENTS (заготовка под ЮKassa)
+// ───────────────────────────────────────────────────────────────
+
+enum PaymentProvider {
+  YOOKASSA
+  ROBOKASSA
+  MANUAL
+}
+
+enum PaymentStatus {
+  PENDING
+  WAITING_FOR_CAPTURE
+  SUCCEEDED
+  CANCELLED
+  FAILED
+}
+
+// ───────────────────────────────────────────────────────────────
+// NOTIFY WHEN BACK IN STOCK
+// ───────────────────────────────────────────────────────────────
+
+model NotifyRequest {
+  id        String   @id @default(cuid())
+  email     String
+  productId String?
+  variantId String?
+  notified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([email, variantId])
+  @@index([variantId])
+  @@index([notified])
+}
+
+// ───────────────────────────────────────────────────────────────
+// WISHLIST
+// ───────────────────────────────────────────────────────────────
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId, createdAt])
+}
+
+// ───────────────────────────────────────────────────────────────
+// PAYMENTS
+// ───────────────────────────────────────────────────────────────
+
+model Payment {
+  id          String          @id @default(cuid())
+  orderId     String
+  provider    PaymentProvider @default(ROBOKASSA)
+  providerId  String?         @unique
+  status      PaymentStatus   @default(PENDING)
+  amountMinor Int
+  currency    String          @default("RUB")
+  rawPayload  Json?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([status])
+}
+
+// ───────────────────────────────────────────────────────────────
+// SUPPORT CHAT
+// ───────────────────────────────────────────────────────────────
+
+enum ConversationStatus {
+  BOT          // ведёт бот, оператор не запрошен
+  WAITING      // пользователь позвал оператора
+  OPERATOR     // оператор подключился
+  CLOSED
+}
+
+model Conversation {
+  id              String             @id @default(cuid())
+  userId          String
+  status          ConversationStatus @default(BOT)
+  topicTag        String?            // последняя угаданная категория FAQ
+  unreadForAdmin  Int                @default(0)
+  unreadForUser   Int                @default(0)
+  lastMessageAt   DateTime           @default(now())
+  createdAt       DateTime           @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([userId])
+  @@index([status, lastMessageAt])
+}
+
+enum MessageSender {
+  USER
+  BOT
+  OPERATOR
+  SYSTEM
+}
+
+model Message {
+  id             String        @id @default(cuid())
+  conversationId String
+  sender         MessageSender
+  body           String        @db.Text
+  faqTag         String?       // если бот ответил на FAQ — какая категория
+  createdAt      DateTime      @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
