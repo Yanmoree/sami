@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--workspace", "@sami/web", "run", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "web-demo",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--workspace", "@sami/web", "run", "dev:demo"],
+      "port": 5173
+    }
+  ]
+}
